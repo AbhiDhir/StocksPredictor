@@ -26,7 +26,7 @@ twitter_access_token_key = key_dict['twitter_access_token_key']
 twitter_access_token_secret = key_dict['twitter_access_token_secret']
 
 ## API Models ##
-ml = MonkeyLearn(ml_private_key)
+# ml = MonkeyLearn(ml_private_key)
 twtr = twitter.Api(consumer_key=twitter_consumer_key,
                   consumer_secret=twitter_consumer_secret_key,
                   access_token_key=twitter_access_token_key,
@@ -37,6 +37,8 @@ twtr = twitter.Api(consumer_key=twitter_consumer_key,
 # df = pd.DataFrame(data, columns= ['id', 'company', 'date', 'text', 'followers', 
                                 #   'likes', 'retweets'])
 # df.to_csv('raw-twitter-data.csv', mode='w', index = False, header=True)
+# with open(twitter_data_csv, 'a') as f:
+    # f.write('\n')
 
 today = date.today()
 
@@ -69,7 +71,5 @@ for tweet_id, tweet_data in raw_twitter_data.items():
     twitter_data.append(tweet)
 
 # write to file
-with open(twitter_data_csv, 'a') as f:
-    f.write('\n')
 df = pd.DataFrame(twitter_data) 
 df.to_csv(twitter_data_csv, mode='a', index=False,header=False)
