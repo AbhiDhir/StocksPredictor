@@ -2,6 +2,7 @@ from datetime import date, timedelta
 import twitter
 import pickle
 import pandas as pd
+import sys
 
 ## Files ##
 filepath_to_keys = "private-keys" # Hidden file containing private keys
@@ -41,6 +42,9 @@ twtr = twitter.Api(consumer_key=twitter_consumer_key,
     # f.write('\n')
 
 today = date.today()
+with open("last-ran", "r") as f:
+    if(f.readline() == str(today)):
+        sys.exit("Already Run Today")
 
 # generate queries
 query_dict = {}
@@ -73,3 +77,6 @@ for tweet_id, tweet_data in raw_twitter_data.items():
 # write to file
 df = pd.DataFrame(twitter_data) 
 df.to_csv(twitter_data_csv, mode='a', index=False,header=False)
+
+with open("last-ran", "w") as f:
+    f.write(str(today))
