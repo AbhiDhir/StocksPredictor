@@ -5,32 +5,31 @@ from string import punctuation
 from nltk.corpus import stopwords
 import pandas as pd
 import pickle
-# from spellchecker import SpellChecker
-# from data_collection import company_dict
+import demoji
 
-
-_stopwords = set(stopwords.words('english') + ['AT_USER', 'URL', 'rt', '’'])
-
-# spell = SpellChecker()
-# add_words = ['tesla', 'microsoft', 'valero', 'tsla', 'msft', 'aapl', 'vlo']
-# spell.word_frequency.load_words(add_words)
+_stopwords = set(stopwords.words('english') + ['rt', '’'])
 
 def processTweet(tweet):
-    tweet = tweet.lower()
-    tweet = re.sub(r'((www\.[^\s]+)|(https?://[^\s]+))', 'URL', tweet)
-    tweet = re.sub(r'@[^\s]+', 'AT_USER', tweet)
-    tweet = re.sub(r'#([^\s]+)', r'\1', tweet)
-    tweet = ''.join(ch for ch in tweet if ch not in set(punctuation) - set(['@', '_']))
-    tweet = ''.join(ch for ch in tweet if ch not in ['…'])
-    tweet = word_tokenize(tweet) 
-    return [word for word in tweet if word not in _stopwords]
+    tweet = demoji.replace(tweet) #removes emoticons
+    tweet = tweet.lower() #lowercase
+    tweet = re.sub(r'((www\.[^\s]+)|(https?://[^\s]+))', '', tweet) #removes urls
+    tweet = re.sub(r'@[^\s]+', '', tweet) #removes usernames
+    tweet = re.sub(r'#([^\s]+)', r'\1', tweet) #removes hastags
+    tweet = ''.join(ch for ch in tweet if ch not in set(punctuation)) # removes punctuation
+    tweet = ''.join(ch for ch in tweet if ch not in ['…']) #removes elipses (not included in punctuation)
+    tweet = word_tokenize(tweet) # tokenize string into list
+    return [word for word in tweet if word not in _stopwords] # removes english stopwords
 
-def getTrainingData(filename):
-    df = pd.read_csv(filename)
+def minimumProcessTweet(tweet):
+    return [e.lower() for e in tweet.split() if len(e) >= 3]
+
+def getTrainingData(filename, cols):
+    df = pd.read_csv(filename, header=None, names=cols, encoding="ISO-8859-1")
     trainingData = []
     index = 0
-    for tweet in df['TweetText']:
-        trainingData.append((processTweet(tweet), df['Sentiment'][index]))
+    for tweet in df['text']:
+        # trainingData.append((minimumProcessTweet(tweet), df['sentiment'][index]))
+        trainingData.append((processTweet(tweet), df['sentiment'][index]))
         index+=1
     return trainingData
 
@@ -52,14 +51,23 @@ def extract_features(tweet):
         features['contains(%s)' % word]=(word in tweet_words)
     return features 
 
-trainingData = getTrainingData("full-corpus.csv")
-word_features = buildVocabulary(trainingData)
+### Stanford Dataset Model (~1,600,000 tweets, higher accuracy) ###
+# cols = ['sentiment', 'id', 'date', 'query_string', 'user', 'text']
+# trainingData = getTrainingData("./stanford_dataset_model/trainingandtestdata/training.1600000.processed.noemoticon.csv", cols)
+# pickle.dump(trainingData, open("stanford_dataset_model/trainingData", "wb"))
+# pickle.dump(trainingData, open("stanford_dataset_model/minimumProcessedTrainingData", "wb"))
+# trainingData = pickle.load(open("stanford_dataset_model/trainingData", "rb"))
+# word_features = buildVocabulary(trainingData)
+# trainingFeatures = nltk.classify.apply_features(extract_features, trainingData)
+
+# classifier = nltk.NaiveBayesClassifier.train(trainingFeatures)
+# pickle.dump(classifier, open("stanford_dataset_model/model", "wb"))
+# classifier = pickle.load(open("stanford_dataset_model/model", "rb"))
+
+### Twitter Corpus Model (~3500 tweets, low accuracy) ###
+# trainingData = getTrainingData("./twitter_corpus_model/full-corpus.csv", None)
+# word_features = buildVocabulary(trainingData)
 # trainingFeatures = nltk.classify.apply_features(extract_features, trainingData)
 # NBayesClassifier=nltk.NaiveBayesClassifier.train(trainingFeatures)
-# pickle.dump(NBayesClassifier, open("temp", 'wb'))
-classifier = pickle.load(open("corpus_model", 'rb'))
-results = [classifier.classify(extract_features(i[0])) for i in trainingData]
-print(results)
-# print(processTweet("https://www.nasdfas.com www.asfasf.com http://biggasdf.com @person1 RT @person2: Corn hasn't got to be the most delllicious crop in the world!!!! #corn #thoughts..."))
-# print(processTweet("RT @Manda_AMSBT: The sole reason why I started drawing when I was 11 was because I wanted to draw inuyasha These don’t do him justice but…"))
-# print(processTweet("tesla"))
+# pickle.dump(NBayesClassifier, open("corpus_model", 'wb'))
+# classifier = pickle.load(open("corpus_model", 'rb'))

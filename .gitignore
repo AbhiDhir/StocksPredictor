@@ -4,3 +4,5 @@ generate_keys.py
 !corpus.csv
 rawdata/*
 last-ran
+minimumProcessedTrainingData
+trainingData
