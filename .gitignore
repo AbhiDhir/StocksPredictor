@@ -6,3 +6,4 @@ rawdata/*
 last-ran
 minimumProcessedTrainingData
 trainingData
+stanford-corenlp-4.0.0
